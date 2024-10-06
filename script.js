@@ -59,17 +59,18 @@ class PlayGame extends Phaser.Scene {
         this.load.image("damaged_grey_star", "assets/star_enemy_damaged.png")
         this.load.image("spike_down", "assets/spike_down.png")
 
-        this.load.audio('music', 'assets/Background_music.mp3');
-        this.load.audio('gun', 'assets/gun.mp3');
-        this.load.audio('shot', 'assets/shot.mp3');
-        this.load.audio('metal_hit', 'assets/metal_hit.mp3');
-        this.load.audio('crush', 'assets/crush.mp3');
-        this.load.audio('boss_hit', 'assets/boss_hit.mp3');
-        this.load.audio('entrance', 'assets/entrance.mp3');
-        this.load.audio('death_sound', 'assets/death_sound.mp3');
-        this.load.audio('jump', 'assets/jump.mp3');
+        this.load.audio('music', 'assets/sound/Background_music.mp3');
+        this.load.audio('gun', 'assets/sound/gun.mp3');
+        this.load.audio('shot', 'assets/sound/shot.mp3');
+        this.load.audio('metal_hit', 'assets/sound/metal_hit.mp3');
+        this.load.audio('crush', 'assets/sound/crush.mp3');
+        this.load.audio('boss_hit', 'assets/sound/boss_hit.mp3');
+        this.load.audio('entrance', 'assets/sound/entrance.mp3');
+        this.load.audio('death_sound', 'assets/sound/death_sound.mp3');
+        this.load.audio('jump', 'assets/sound/jump.mp3');
+        
     }
-
+    
     create() {
         
         // Music and sound effects
@@ -655,9 +656,19 @@ class EndGame extends Phaser.Scene {
     constructor() {
         super("EndGame")
     }
-
+    preload() {
+        this.load.audio('death_music', 'assets/sound/Death_music.mp3');
+    }
     create() {
-        this.failtext = this.add.text(game.config.width*0.45, game.config.height*0.20, "You died.", {fontSize: "30px", fill: "#ffffff"})
+
+        this.death_music = this.sound.add('death_music');
+    
+        this.death_music.play({
+            loop: true,
+            volume: 2
+        });
+
+        this.failtext = this.add.text(game.config.width*0.25, game.config.height*0.20, "You died. It happens. And will happen again.", {fontSize: "30px", fill: "#ffffff"})
         this.instructiontext = this.add.text(game.config.width*0.32, game.config.height*0.30, "Refresh page (R) to try again.", {fontSize: "30px", fill: "#808080"})
         this.instructiontext2 = this.add.text(game.config.width*0.3, game.config.height*0.40, "Oh, right. The controls are:", {fontSize: "30px", fill: "#808080"})
         this.instructiontext3 = this.add.text(game.config.width*0.3, game.config.height*0.45, "'Left' and 'right' for movement", {fontSize: "30px", fill: "#808080"})
@@ -683,7 +694,8 @@ class WinGame extends Phaser.Scene {
         super("WinGame")
     }
     preload() {
-        this.load.audio('victory', 'assets/victory.mp3');
+        this.load.image("star", "assets/star.png")
+        this.load.audio('victory', 'assets/sound/victory.mp3');
     }
     create() {
         this.backgroundMusic = this.sound.add('victory');
@@ -697,6 +709,9 @@ class WinGame extends Phaser.Scene {
         this.instructiontext = this.add.text(game.config.width*0.32, game.config.height*0.55, "Refresh page (R) to play again.", {fontSize: "30px", fill: "#808080"})
 
         this.resetKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
+
+        
+        this.add.image(game.config.width*0.5, game.config.height*0.25, "star").setScale(10)
     }
     refreshScreen() {
         window.location.reload();
