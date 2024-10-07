@@ -58,6 +58,7 @@ class PlayGame extends Phaser.Scene {
         this.load.image("grey_star", "assets/star_enemy.png")
         this.load.image("damaged_grey_star", "assets/star_enemy_damaged.png")
         this.load.image("spike_down", "assets/spike_down.png")
+        this.load.image("boss_hp", "assets/boss_hp.png")
 
         this.load.audio('music', 'assets/sound/Background_music.mp3');
         this.load.audio('gun', 'assets/sound/gun.mp3');
@@ -68,7 +69,6 @@ class PlayGame extends Phaser.Scene {
         this.load.audio('entrance', 'assets/sound/entrance.mp3');
         this.load.audio('death_sound', 'assets/sound/death_sound.mp3');
         this.load.audio('jump', 'assets/sound/jump.mp3');
-        
     }
     
     create() {
@@ -157,7 +157,10 @@ class PlayGame extends Phaser.Scene {
             yoyo: true,
             repeat: -1 
         })
-  
+        // Boss health bar
+        this.bossHealthBar = this.add.image(0, game.config.height-10, "boss_hp")
+        this.bossHealthBar.setScale(20,2);
+        
         // MOVEMENT
         // Cursor keys
         this.cursors = this.input.keyboard.createCursorKeys()
@@ -245,7 +248,7 @@ class PlayGame extends Phaser.Scene {
         })
 
     }
-
+    // Refresh and reset the game
     refreshScreen() {
         window.location.reload();
     }
@@ -500,6 +503,7 @@ class PlayGame extends Phaser.Scene {
         bullet.destroy();
         this.bulletsOnScreen -= 1;
         this.bossHealth -= 1;
+        this.bossHealthBar.setScale((20/100)*this.bossHealth,2);
         this.bossHealthText.setText("BOSS HP: " + this.bossHealth)
 
         this.star_boss.setTexture('damaged_star');
