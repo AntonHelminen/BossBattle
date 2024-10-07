@@ -29,7 +29,7 @@ window.onload = function() {
                 }
             }
         },
-        scene: [PlayGame, EndGame, WinGame]
+        scene: [PlayGame, NextStage, EndGame, WinGame]
     }
     game = new Phaser.Game(gameConfig)
     window.focus();
@@ -46,7 +46,7 @@ class PlayGame extends Phaser.Scene {
         this.bulletsOnScreen = 0; // Bullet tracker
         this.bossHealth = 100; // Boss health
         this.greyStarHealth = 20; // Miniboss health
-        this.timer = 0; // Second passed
+        this.timer = 0; // Seconds passed
     }
 
     preload() {
@@ -143,7 +143,7 @@ class PlayGame extends Phaser.Scene {
         this.star_boss = this.physics.add.sprite(game.config.width*0.9, game.config.height*0.15, "star");
         this.star_boss.setScale(7)
         this.bossHealthText = this.add.text(game.config.width*0.85, 20, "BOSS HP: " + this.bossHealth, {fontSize: "30px", fill: "#ffffff"})
-        this.physics.add.overlap(this.bulletGroup, this.star_boss, this.bulletHitBoss, null, this);
+        this.physics.add.overlap(this.star_boss, this.bulletGroup, this.bulletHitBoss, null, this);
 
         //Add a tween to move the object up and down (From ChatGPT)
         this.tweens.add({
@@ -160,7 +160,6 @@ class PlayGame extends Phaser.Scene {
         // Boss health bar
         this.bossHealthBar = this.add.image(0, game.config.height-10, "boss_hp")
         this.bossHealthBar.setScale(20,2);
-        
         // MOVEMENT
         // Cursor keys
         this.cursors = this.input.keyboard.createCursorKeys()
@@ -439,7 +438,7 @@ class PlayGame extends Phaser.Scene {
             center_star = this.starsGroup.create(game.config.width*0.6, game.config.height*0.5, 'star');
             center_star.setScale(2);
 
-            for(let i = 0; i < 1000; i++) {
+            for(let i = 0; i < 10000; i++) {
                 this.time.delayedCall(i*200, () => {
                     this.shot.play({
                         loop: false,
@@ -491,25 +490,47 @@ class PlayGame extends Phaser.Scene {
         this.bulletsOnScreen -= 1;
     }
 
-    bulletHitBoss(boss, bullet) {
-        this.time.delayedCall(5, () => {
-            this.boss_hit.play({
-                loop: false,
-                volume: 1
-            });
-        }, [], this);
+    bulletHitBoss(star_boss, bullet) {
+        if (!star_boss.active) {
+            return;
+        }
 
         bullet.disableBody(true, true)
         bullet.destroy();
         this.bulletsOnScreen -= 1;
         this.bossHealth -= 1;
+
         this.bossHealthBar.setScale((20/100)*this.bossHealth,2);
         this.bossHealthText.setText("BOSS HP: " + this.bossHealth)
 
-        this.star_boss.setTexture('damaged_star');
-        this.time.delayedCall(100, () => {
-            this.star_boss.setTexture('star');
-        }, [], this);
+        if (this.bossHealth <= 0) {
+
+            this.tweens.killTweensOf(star_boss);
+            star_boss.body.setEnable(false);
+            this.physics.world.disable(star_boss);
+    
+            star_boss.setActive(false).setVisible(false);
+    
+            // Prevent any future interaction with grey_star after destruction
+            star_boss.destroy();
+
+        } else {
+            this.time.delayedCall(5, () => {
+                this.boss_hit.play({
+                    loop: false,
+                    volume: 1
+                });
+            }, [], this);
+
+            
+
+            this.star_boss.setTexture('damaged_star');
+            this.time.delayedCall(100, () => {
+                if (star_boss && star_boss.active) {
+                    star_boss.setTexture('star');
+                }
+            }, [], this);
+        }
     }
 
     bulletHitGreyStar(bullet, grey_star) {
@@ -538,9 +559,6 @@ class PlayGame extends Phaser.Scene {
             // Prevent any future interaction with grey_star after destruction
             grey_star.destroy();
             this.greyStarHealth = 25;
-    
-            // Stop timer or mark fight as complete
-            this.timerText.setText(`Fight Complete! Time: ${this.timerText.text.split(': ')[1]}`);
     
         } else {
             this.time.delayedCall(5, () => {
@@ -654,6 +672,15 @@ class PlayGame extends Phaser.Scene {
             this.scene.start("EndGame")
         }
         if (this.bossHealth <= 0) {
+
+            /*this.scene.start('NextStage', { 
+                    playerHealth: this.playerhealth,
+                    playerPosX: this.dude.x, 
+                    playerPosY: this.dude.y,
+                    playerVelocityX: this.dude.body.velocity.x,
+                    playerVelocityY: this.dude.body.velocity.y
+                });*/
+
             this.backgroundMusic.stop();
             this.crush.play({
                 loop: false,
@@ -731,6 +758,273 @@ class WinGame extends Phaser.Scene {
     update() {
         if (Phaser.Input.Keyboard.JustDown(this.resetKey)) {
             this.refreshScreen()
+        }
+    }
+}
+
+class NextStage extends Phaser.Scene {
+
+    constructor() {
+        super("NextStage")
+        this.bulletCap = 5;
+        this.facingRight = false;
+        this.bulletsOnScreen = 0;
+    }
+    init(data) {
+        this.playerHealth = data.playerHealth;
+        this.playerPosX = data.playerPosX;
+        this.playerPosY = data.playerPosY;
+        this.initialVelocityX = data.playerVelocityX;
+        this.initialVelocityY = data.playerVelocityY;
+    }
+    preload() {
+        this.load.image("ground", "assets/platform.png")
+        this.load.image("star", "assets/star.png")
+        this.load.spritesheet("dude", "assets/dude.png", {frameWidth: 32, frameHeight: 48})
+        this.load.spritesheet("bullet", "assets/bullet.png", {frameWidth: 1080, frameHeight: 1080, scale: 0.01})
+        this.load.image("damaged_star", "assets/damaged_star.png")
+        this.load.image("grey_star", "assets/star_enemy.png")
+        this.load.image("damaged_grey_star", "assets/star_enemy_damaged.png")
+        this.load.image("spike_down", "assets/spike_down.png")
+        this.load.image("boss_hp", "assets/boss_hp.png")
+
+        this.load.audio('music', 'assets/sound/Background_music.mp3');
+        this.load.audio('gun', 'assets/sound/gun.mp3');
+        this.load.audio('shot', 'assets/sound/shot.mp3');
+        this.load.audio('metal_hit', 'assets/sound/metal_hit.mp3');
+        this.load.audio('crush', 'assets/sound/crush.mp3');
+        this.load.audio('boss_hit', 'assets/sound/boss_hit.mp3');
+        this.load.audio('entrance', 'assets/sound/entrance.mp3');
+        this.load.audio('death_sound', 'assets/sound/death_sound.mp3');
+        this.load.audio('jump', 'assets/sound/jump.mp3');
+    }
+    
+    create() {
+
+        // Music and sound effects
+        this.backgroundMusic = this.sound.add('music');
+        this.crush = this.sound.add('crush')
+        this.gun = this.sound.add('gun')
+        this.shot = this.sound.add('shot')
+        this.metal_hit = this.sound.add('metal_hit')
+        this.boss_hit = this.sound.add('boss_hit');
+        this.entrance = this.sound.add('entrance');
+        this.death_sound = this.sound.add('death_sound');
+        this.jump = this.sound.add('jump')
+
+        // Re-create boss fight platforms:
+        this.groundGroup = this.physics.add.group({
+            immovable: true,
+            allowGravity: false
+        })
+        this.groundGroup.create(game.config.width*0.25, game.config.height*0.2, "ground")
+        this.groundGroup.create(game.config.width*0.1, game.config.height*0.3, "ground")
+        this.groundGroup.create(game.config.width*0.25, game.config.height*0.4, "ground")
+        this.groundGroup.create(game.config.width*0.1, game.config.height*0.5, "ground")
+        this.groundGroup.create(game.config.width*0.25, game.config.height*0.6, "ground")
+        this.groundGroup.create(game.config.width*0.1, game.config.height*0.7, "ground")
+        this.groundGroup.create(game.config.width*0.25, game.config.height*0.8, "ground")
+        
+        // Spikes 76 for the top of the screen
+        this.spikeGroup = this.physics.add.group({
+            immovable: true,
+            allowGravity: false
+        })
+        for(let i = 0; i < 76; i++) {
+            this.spikeGroup.create(i*20, 5, "spike_down")
+        }
+        
+        // Re-create player
+        this.dude = this.physics.add.sprite(this.playerPosX, this.playerPosY, "dude")
+        this.dude.body.gravity.y = gameOptions.dudeGravity;
+        this.dude.setVelocity(this.initialVelocityX, this.initialVelocityY);
+        this.physics.add.collider(this.dude, this.groundGroup)
+
+        // Re-create bullets group
+        this.bulletGroup = this.physics.add.group({
+            maxSize: this.bulletCap
+        })
+        this.physics.add.overlap(this.bulletGroup, this.groundGroup, this.bulletHitGround, null, this)
+
+
+        // MOVEMENT
+        // Cursor keys
+        this.cursors = this.input.keyboard.createCursorKeys()
+        
+        this.shootKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X)
+        this.shootKey_2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+
+        this.jumpKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
+        this.jumpKey_2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
+        
+        this.resetKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
+
+        // Turning to left and left movement
+        this.anims.create({
+            key: "left",
+            frames: this.anims.generateFrameNumbers("dude", {start: 0, end: 3}),
+            frameRate: 10,
+            repeat: -1
+        })
+
+        this.anims.create({
+            key: "halt_left",
+            frames: [{key: "dude", frame: 2}],
+            frameRate: 10,
+        })
+
+        this.anims.create({
+            key: "shoot_left",
+            frames: [{key: "dude", frame: 0}],
+            frameRate: 10,
+            repeat: -1
+        })
+
+        
+        // Turning to right and right movement
+        this.anims.create({
+            key: "right",
+            frames: this.anims.generateFrameNumbers("dude", {start: 5, end: 9}),
+            frameRate: 10,
+            repeat: -1
+        })
+
+        this.anims.create({
+            key: "halt_right",
+            frames: [{key: "dude", frame: 5}],
+            frameRate: 10,
+        })
+
+        this.anims.create({
+            key: "shoot_right",
+            frames: [{key: "dude", frame: 7}],
+            frameRate: 10,
+            repeat: -1
+        })
+    }
+
+    // Function to handle shooting
+    shoot() {
+
+        this.gun.play({
+            loop: false,
+            volume: 0.8
+        });
+
+        let bullet;
+        if (this.facingRight) {
+            bullet = this.bulletGroup.create(this.dude.x + 20, this.dude.y+10, 'bullet');
+        } else {
+            bullet = this.bulletGroup.create(this.dude.x - 20, this.dude.y+10, 'bullet');
+        }
+        
+        bullet.setScale(0.05);
+        
+        if (this.facingRight) {
+            bullet.body.velocity.x = gameOptions.bulletSpeed;
+        } else {
+            
+            bullet.body.velocity.x = -gameOptions.bulletSpeed;
+        }
+        bullet.body.allowGravity = false; 
+    }
+
+    refreshScreen() {
+        window.location.reload();
+    }
+
+    bulletHitGround(bullet) {
+        bullet.disableBody(true, true)
+        bullet.destroy();
+        this.bulletsOnScreen -= 1;
+    }
+
+    update() {
+        // Handle player movement
+        if (this.cursors.left.isDown) {
+            this.dude.body.velocity.x = -gameOptions.dudeSpeed
+            this.dude.anims.play("left", true)
+            this.facingRight = false; // Player is facing left
+        
+        } else if (this.cursors.right.isDown) {
+            this.dude.body.velocity.x = gameOptions.dudeSpeed
+            this.dude.anims.play("right", true)
+            this.facingRight = true; // Player is facing right
+        
+        } else {
+            this.dude.body.velocity.x = 0
+            if (this.facingRight) {
+                this.dude.anims.play("halt_right", true)
+            } else {
+                this.dude.anims.play("halt_left", true)
+            }
+        }
+
+        // Jump and double jump logic
+        if (Phaser.Input.Keyboard.JustDown(this.jumpKey) || Phaser.Input.Keyboard.JustDown(this.jumpKey_2)) {
+            if (this.dude.body.touching.down) {
+                this.dude.body.velocity.y = -600; // Perform first jump
+                this.jump.play({
+                    loop: false,
+                    volume: 3
+                });
+                this.doubleJump = true;
+            } 
+            else if (this.doubleJump) {
+                this.dude.body.velocity.y = -600; // Perform double jump
+                this.jump.play({
+                    loop: false,
+                    volume: 3
+                });
+                this.doubleJump = false; 
+            }
+        }
+
+        if (this.dude.body.touching.down) {
+            this.doubleJump = true;
+        }
+
+        // Shooting with X
+        if ((Phaser.Input.Keyboard.JustDown(this.shootKey) || Phaser.Input.Keyboard.JustDown(this.shootKey_2)) && this.bulletsOnScreen < this.bulletCap) {
+            this.shoot();
+            if (this.facingRight) {
+                this.dude.anims.play("shoot_right", true)
+            }
+            else {
+                this.dude.anims.play("shoot_left", true)
+            }
+            this.bulletsOnScreen += 1
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.resetKey)) {
+            this.refreshScreen()
+        }
+
+        // Remove bullets and stars when they leave the screen
+        this.bulletGroup.children.each((bullet) => {
+            if (bullet.x > game.config.width || bullet.x < 0) {
+                bullet.destroy(); // Destroy bullets when they go off-screen
+                this.bulletsOnScreen -= 1; // Decrease bullet count
+            }
+        }, this);
+
+
+        // Game end conditions
+        if (this.dude.y > game.config.height || this.dude.y < 0) {
+            this.backgroundMusic.stop();
+            this.death_sound.play({
+                loop: false,
+                volume: 1
+            });
+            this.scene.start("EndGame")
+        }
+        if (this.playerhealth <= 0) {
+            this.backgroundMusic.stop();
+            this.death_sound.play({
+                loop: false,
+                volume: 1
+            });
+            this.scene.start("EndGame")
         }
     }
 }
