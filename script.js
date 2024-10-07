@@ -40,7 +40,7 @@ class PlayGame extends Phaser.Scene {
     constructor() {
         super("PlayGame")
         this.facingRight = true; // Track the direction the dude is facing
-        this.playerhealth = 3; // How many hits the player can take
+        this.playerhealth = 5; // How many hits the player can take
         this.doubleJump = false; // Track if the player can double jump
         this.bulletCap = 5; // Max bullets on screen
         this.bulletsOnScreen = 0; // Bullet tracker
@@ -428,6 +428,10 @@ class PlayGame extends Phaser.Scene {
     }
     spawn_random360() {
         this.time.delayedCall(1000, () => {
+            let center_star;
+            center_star = this.starsGroup.create(game.config.width*0.6, game.config.height*0.5, 'star');
+            center_star.setScale(2);
+
             for(let i = 0; i < 1000; i++) {
                 this.time.delayedCall(i*200, () => {
                     this.shot.play({
@@ -702,7 +706,7 @@ class WinGame extends Phaser.Scene {
     
         this.backgroundMusic.play({
             loop: false,
-            volume: 1
+            volume: 3
         });
 
         this.wintext = this.add.text(game.config.width*0.42, game.config.height*0.45, "You're winner!", {fontSize: "30px", fill: "#ffffff"})
