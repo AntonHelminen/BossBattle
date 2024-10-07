@@ -86,7 +86,7 @@ class PlayGame extends Phaser.Scene {
     
         this.backgroundMusic.play({
             loop: true,
-            volume: 0.12
+            volume: 1
         });
 
         // Create boss fight platforms:
@@ -251,7 +251,7 @@ class PlayGame extends Phaser.Scene {
 
         this.gun.play({
             loop: false,
-            volume: 0.12
+            volume: 0.8
         });
 
         let bullet;
@@ -275,7 +275,7 @@ class PlayGame extends Phaser.Scene {
     spawn_grey_star() {
         this.entrance.play({
             loop: false,
-            volume: 0.5
+            volume: 2
         });
         let grey_star;
         grey_star = this.grey_star_group.create(game.config.width, game.config.height*0.5, 'grey_star');
@@ -298,7 +298,7 @@ class PlayGame extends Phaser.Scene {
 
                     this.shot.play({
                         loop: false,
-                        volume: 0.2
+                        volume: 2
                     });
 
                     let star;
@@ -327,7 +327,7 @@ class PlayGame extends Phaser.Scene {
                 this.time.delayedCall(i*100, () => {
                     this.shot.play({
                         loop: false,
-                        volume: 0.2
+                        volume: 2
                     });
 
                     let star;
@@ -350,7 +350,7 @@ class PlayGame extends Phaser.Scene {
                 this.time.delayedCall(i*300, () => {
                     this.shot.play({
                         loop: false,
-                        volume: 0.2
+                        volume: 2
                     });
 
                     let star;
@@ -379,7 +379,7 @@ class PlayGame extends Phaser.Scene {
                 this.time.delayedCall(i*100, () => {
                     this.shot.play({
                         loop: false,
-                        volume: 0.2
+                        volume: 2
                     });
 
                     let star;
@@ -403,7 +403,7 @@ class PlayGame extends Phaser.Scene {
                 this.time.delayedCall(i*100, () => {
                     this.shot.play({
                         loop: false,
-                        volume: 0.2
+                        volume: 2
                     });
 
                     let star;
@@ -432,7 +432,7 @@ class PlayGame extends Phaser.Scene {
                 this.time.delayedCall(i*200, () => {
                     this.shot.play({
                         loop: false,
-                        volume: 0.2
+                        volume: 2
                     });
 
                     let star;
@@ -455,7 +455,7 @@ class PlayGame extends Phaser.Scene {
     getStarred(dude, star) {
         this.metal_hit.play({
             loop: false,
-            volume: 0.7
+            volume: 2
         });
         star.disableBody(true, true)
         this.playerhealth -= 1
@@ -464,7 +464,7 @@ class PlayGame extends Phaser.Scene {
     dudeHitSpike(dude, spike) {
         this.crush.play({
             loop: false,
-            volume: 0.7
+            volume: 2
         });
         this.playerhealth = 0
         this.healthText.setText(this.playerhealth)
@@ -484,7 +484,7 @@ class PlayGame extends Phaser.Scene {
         this.time.delayedCall(5, () => {
             this.boss_hit.play({
                 loop: false,
-                volume: 0.2
+                volume: 1
             });
         }, [], this);
 
@@ -513,7 +513,7 @@ class PlayGame extends Phaser.Scene {
         if (this.greyStarHealth <= 0) {
             this.crush.play({
                 loop: false,
-                volume: 1
+                volume: 2
             });
     
             // Ensure all tweens or events related to grey_star are killed before destruction
@@ -534,7 +534,7 @@ class PlayGame extends Phaser.Scene {
             this.time.delayedCall(5, () => {
                 this.metal_hit.play({
                     loop: false,
-                    volume: 0.7
+                    volume: 2
                 });
             }, [], this);
     
@@ -576,7 +576,7 @@ class PlayGame extends Phaser.Scene {
                 this.dude.body.velocity.y = -600; // Perform first jump
                 this.jump.play({
                     loop: false,
-                    volume: 1
+                    volume: 3
                 });
                 this.doubleJump = true;
             } 
@@ -584,7 +584,7 @@ class PlayGame extends Phaser.Scene {
                 this.dude.body.velocity.y = -600; // Perform double jump
                 this.jump.play({
                     loop: false,
-                    volume: 1
+                    volume: 3
                 });
                 this.doubleJump = false; 
             }
@@ -645,7 +645,7 @@ class PlayGame extends Phaser.Scene {
             this.backgroundMusic.stop();
             this.crush.play({
                 loop: false,
-                volume: 1
+                volume: 2
             });
             this.scene.start("WinGame")
         }
@@ -665,7 +665,7 @@ class EndGame extends Phaser.Scene {
     
         this.death_music.play({
             loop: true,
-            volume: 2
+            volume: 10
         });
 
         this.failtext = this.add.text(game.config.width*0.25, game.config.height*0.20, "You died. It happens. And will happen again.", {fontSize: "30px", fill: "#ffffff"})
