@@ -163,9 +163,13 @@ class PlayGame extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys()
         
         this.shootKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X)
+        this.shootKey_2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+
         this.jumpKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z)
-        this.resetKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
+        this.jumpKey_2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
         
+        this.resetKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
+
         // Turning to left and left movement
         this.anims.create({
             key: "left",
@@ -575,7 +579,7 @@ class PlayGame extends Phaser.Scene {
         }
 
         // Jump and double jump logic
-        if (Phaser.Input.Keyboard.JustDown(this.jumpKey)) {
+        if (Phaser.Input.Keyboard.JustDown(this.jumpKey) || Phaser.Input.Keyboard.JustDown(this.jumpKey_2)) {
             if (this.dude.body.touching.down) {
                 this.dude.body.velocity.y = -600; // Perform first jump
                 this.jump.play({
@@ -599,7 +603,7 @@ class PlayGame extends Phaser.Scene {
         }
 
         // Shooting with X
-        if (Phaser.Input.Keyboard.JustDown(this.shootKey) && this.bulletsOnScreen < this.bulletCap) {
+        if ((Phaser.Input.Keyboard.JustDown(this.shootKey) || Phaser.Input.Keyboard.JustDown(this.shootKey_2)) && this.bulletsOnScreen < this.bulletCap) {
             this.shoot();
             if (this.facingRight) {
                 this.dude.anims.play("shoot_right", true)
