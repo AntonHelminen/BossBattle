@@ -29,6 +29,7 @@ window.onload = function() {
                 }
             }
         },
+        
         scene: [PlayGame, NextStage, EndGame, WinGame]
     }
     game = new Phaser.Game(gameConfig)
@@ -47,6 +48,7 @@ class PlayGame extends Phaser.Scene {
         this.bossHealth = 100; // Boss health
         this.greyStarHealth = 20; // Miniboss health
         this.timer = 0; // Seconds passed
+        this.can_attack = true; // Whether boss can attack
     }
 
     preload() {
@@ -55,10 +57,12 @@ class PlayGame extends Phaser.Scene {
         this.load.spritesheet("dude", "assets/dude.png", {frameWidth: 32, frameHeight: 48})
         this.load.spritesheet("bullet", "assets/bullet.png", {frameWidth: 1080, frameHeight: 1080, scale: 0.01})
         this.load.image("damaged_star", "assets/damaged_star.png")
+        this.load.image("hurt_star", "assets/hurt_star.png")
         this.load.image("grey_star", "assets/star_enemy.png")
         this.load.image("damaged_grey_star", "assets/star_enemy_damaged.png")
         this.load.image("spike_down", "assets/spike_down.png")
         this.load.image("boss_hp", "assets/boss_hp.png")
+
 
         this.load.audio('music', 'assets/sound/Background_music.mp3');
         this.load.audio('gun', 'assets/sound/gun.mp3');
@@ -158,8 +162,10 @@ class PlayGame extends Phaser.Scene {
             repeat: -1 
         })
         // Boss health bar
+        this.bossMaxHealth = this.bossHealth;
         this.bossHealthBar = this.add.image(0, game.config.height-10, "boss_hp")
         this.bossHealthBar.setScale(20,2);
+
         // MOVEMENT
         // Cursor keys
         this.cursors = this.input.keyboard.createCursorKeys()
@@ -279,16 +285,17 @@ class PlayGame extends Phaser.Scene {
     }
     // Spawn enemy grey star
     spawn_grey_star() {
-        this.entrance.play({
-            loop: false,
-            volume: 2
-        });
-        let grey_star;
-        grey_star = this.grey_star_group.create(game.config.width, game.config.height*0.5, 'grey_star');
-        grey_star.setScale(30)
-        grey_star.body.velocity.x = -gameOptions.bulletSpeed*0.3
-        grey_star.body.velocity.y = 0
-        
+        if(this.can_attack) {
+            this.entrance.play({
+                loop: false,
+                volume: 2
+            });
+            let grey_star;
+            grey_star = this.grey_star_group.create(game.config.width, game.config.height*0.5, 'grey_star');
+            grey_star.setScale(30)
+            grey_star.body.velocity.x = -gameOptions.bulletSpeed*0.3
+            grey_star.body.velocity.y = 0
+        }
     }
 
     timer_update() {
@@ -298,168 +305,192 @@ class PlayGame extends Phaser.Scene {
 
     // The boss Shoots ten stars at the players current position
     homing_star_attack() {
-        this.time.delayedCall(1000, () => {
-            for(let i = 0; i < 10; i++) {
-                this.time.delayedCall(i*1000, () => {
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+                for(let i = 0; i < 10; i++) {
+                    this.time.delayedCall(i*1000, () => {
+                        if(this.can_attack) {
 
-                    this.shot.play({
-                        loop: false,
-                        volume: 2
-                    });
+                            this.shot.play({
+                                loop: false,
+                                volume: 2
+                            });
 
-                    let star;
-                    star = this.starsGroup.create(this.star_boss.x-20, this.star_boss.y, 'star');
-                    star.setScale(2)
-                    const dx = this.dude.x - star.x;
-                    const dy = this.dude.y - star.y;
+                            let star;
+                            star = this.starsGroup.create(this.star_boss.x-20, this.star_boss.y, 'star');
+                            star.setScale(2)
+                            const dx = this.dude.x - star.x;
+                            const dy = this.dude.y - star.y;
 
-                    const angle = Math.atan2(dy, dx);
+                            const angle = Math.atan2(dy, dx);
 
-                    star.body.velocity.x = Math.cos(angle) * gameOptions.bulletSpeed*1.1;
-                    star.body.velocity.y = Math.sin(angle) * gameOptions.bulletSpeed*1.1;
+                            star.body.velocity.x = Math.cos(angle) * gameOptions.bulletSpeed*1.1;
+                            star.body.velocity.y = Math.sin(angle) * gameOptions.bulletSpeed*1.1;
 
-                    star.body.allowGravity = false;
-                    if (i >= 9) {
-                        this.star_rain();
-                    }
-                }, [], this); 
-            }
-        }, [], this);
+                            star.body.allowGravity = false;
+                            if (i >= 9) {
+                                this.star_rain();
+                            }
+                        }
+                        }, [], this); 
+                }
+            }, [], this);
+        }
     }
     // The boss rains down stars
     star_rain() {
-        this.time.delayedCall(1000, () => {
-            for(let i = 0; i < 100; i++) {
-                this.time.delayedCall(i*100, () => {
-                    this.shot.play({
-                        loop: false,
-                        volume: 2
-                    });
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+                for(let i = 0; i < 100; i++) {
+                    this.time.delayedCall(i*100, () => {
+                        if(this.can_attack) {
+                            this.shot.play({
+                                loop: false,
+                                volume: 2
+                            });
 
-                    let star;
-                    star = this.starsGroup.create(Phaser.Math.Between(0, game.config.width), 0, 'star');
-                    star.body.velocity.y = gameOptions.bulletSpeed*1;
+                            let star;
+                            star = this.starsGroup.create(Phaser.Math.Between(0, game.config.width), 0, 'star');
+                            star.body.velocity.y = gameOptions.bulletSpeed*1;
 
-                    star.body.allowGravity = false;
+                            star.body.allowGravity = false;
 
                 
-                    if (i >= 99) {
-                        this.star_pain();
-                    }
-                }, [], this);
-            }
-        }, [], this);
+                            if (i >= 99) {
+                                this.star_pain();
+                            }
+                        }
+                    }, [], this);
+                }
+            }, [], this);
+        }
     }
     star_pain() {
-        this.time.delayedCall(1000, () => {
-            for(let i = 0; i < 15; i++) {
-                this.time.delayedCall(i*300, () => {
-                    this.shot.play({
-                        loop: false,
-                        volume: 2
-                    });
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+                for(let i = 0; i < 15; i++) {
+                    this.time.delayedCall(i*300, () => {
+                        if(this.can_attack) {
+                            this.shot.play({
+                                loop: false,
+                                volume: 2
+                            });
 
-                    let star;
-                    star = this.starsGroup.create(this.star_boss.x, Phaser.Math.Between(0, game.config.height), 'star');
-                    star.setScale(2)
-                    const dx = this.dude.x - star.x;
-                    const dy = this.dude.y - star.y;
+                            let star;
+                            star = this.starsGroup.create(this.star_boss.x, Phaser.Math.Between(0, game.config.height), 'star');
+                            star.setScale(2)
+                            const dx = this.dude.x - star.x;
+                            const dy = this.dude.y - star.y;
 
-                    const angle = Math.atan2(dy, dx);
+                            const angle = Math.atan2(dy, dx);
 
-                    star.body.velocity.x = Math.cos(angle) * gameOptions.bulletSpeed*1.1;
-                    star.body.velocity.y = Math.sin(angle) * gameOptions.bulletSpeed*1.1;
+                            star.body.velocity.x = Math.cos(angle) * gameOptions.bulletSpeed*1.1;
+                            star.body.velocity.y = Math.sin(angle) * gameOptions.bulletSpeed*1.1;
 
-                    star.body.allowGravity = false;
-                    if (i >= 14) {
-                        this.star_ascent();
-                    }
-                }, [], this); 
-            }
+                            star.body.allowGravity = false;
+                            if (i >= 14) {
+                                this.star_ascent();
+                            }
+                        }
+                    }, [], this); 
+                }
 
-        }, [], this);
+            }, [], this);
+        }
     }
     star_ascent() {
-        this.time.delayedCall(1000, () => {
-            for(let i = 0; i < 100; i++) {
-                this.time.delayedCall(i*100, () => {
-                    this.shot.play({
-                        loop: false,
-                        volume: 2
-                    });
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+                for(let i = 0; i < 100; i++) {
+                    this.time.delayedCall(i*100, () => {
+                        if(this.can_attack) {
+                            this.shot.play({
+                                loop: false,
+                                volume: 2
+                            });
 
-                    let star;
-                    star = this.starsGroup.create(Phaser.Math.Between(0, game.config.width), game.config.height, 'star');
-                    star.body.velocity.y = -gameOptions.bulletSpeed*1;
+                            let star;
+                            star = this.starsGroup.create(Phaser.Math.Between(0, game.config.width), game.config.height, 'star');
+                            star.body.velocity.y = -gameOptions.bulletSpeed*1;
 
-                    star.body.allowGravity = false;
+                            star.body.allowGravity = false;
 
                 
-                    if (i >= 99) {
-                        this.star_wave_attack();
-                    }
-                }, [], this);
-            }
-        }, [], this);
+                            if (i >= 99) {
+                                this.star_wave_attack();
+                            }
+                        }
+                    }, [], this);
+                }
+            }, [], this);
+        }
     }
      // The boss spawns two waves of stars
     star_wave_attack() {
-        this.time.delayedCall(1000, () => {
-            for(let i = 0; i < 100; i++) {
-                this.time.delayedCall(i*100, () => {
-                    this.shot.play({
-                        loop: false,
-                        volume: 2
-                    });
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+                for(let i = 0; i < 100; i++) {
+                    this.time.delayedCall(i*100, () => {
+                        if(this.can_attack) {
+                            this.shot.play({
+                                loop: false,
+                                volume: 2
+                            });
 
-                    let star;
-                    let star2;
-                    star = this.starsGroup.create(this.star_boss.x-20, this.star_boss.y-300, 'star');
-                    star2 = this.starsGroup.create(this.star_boss.x-20, this.star_boss.y+300, 'star');
-                    star.body.velocity.x = -gameOptions.bulletSpeed*0.55;
-                    star2.body.velocity.x = -gameOptions.bulletSpeed*0.55;
-                }, [], this);
-            }
-        }, [], this);
+                            let star;
+                            let star2;
+                            star = this.starsGroup.create(this.star_boss.x-20, this.star_boss.y-300, 'star');
+                            star2 = this.starsGroup.create(this.star_boss.x-20, this.star_boss.y+300, 'star');
+                            star.body.velocity.x = -gameOptions.bulletSpeed*0.55;
+                            star2.body.velocity.x = -gameOptions.bulletSpeed*0.55;
+                        }
+                    }, [], this);
+                }
+            }, [], this);
 
-        // Start the attack cycle again after this cycle has finished
-        this.time.delayedCall(11000, () => {
-            this.triggerTimer = this.time.addEvent({
-                callback: this.homing_star_attack,
-                callbackScope: this,
-                delay: 0,
-                loop: false
-            });
-        }, [], this);
+            // Start the attack cycle again after this cycle has finished
+            this.time.delayedCall(11000, () => {
+                this.triggerTimer = this.time.addEvent({
+                    callback: this.homing_star_attack,
+                    callbackScope: this,
+                    delay: 0,
+                    loop: false
+                });
+            }, [], this);
+        }
     }
     spawn_random360() {
-        this.time.delayedCall(1000, () => {
-            let center_star;
-            center_star = this.starsGroup.create(game.config.width*0.6, game.config.height*0.5, 'star');
-            center_star.setScale(2);
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+                let center_star;
+                center_star = this.starsGroup.create(game.config.width*0.6, game.config.height*0.5, 'star');
+                center_star.setScale(2);
 
-            for(let i = 0; i < 10000; i++) {
-                this.time.delayedCall(i*200, () => {
-                    this.shot.play({
-                        loop: false,
-                        volume: 2
-                    });
+                for(let i = 0; i < 10000; i++) {
+                    this.time.delayedCall(i*200, () => {
+                        if(this.can_attack) {
+                            this.shot.play({
+                                loop: false,
+                                volume: 2
+                            });
 
-                    let star;
-                    star = this.starsGroup.create(game.config.width*0.6, game.config.height*0.5, 'star');
-                    let randomAngle = Phaser.Math.Angle.Random();
+                            let star;
+                            star = this.starsGroup.create(game.config.width*0.6, game.config.height*0.5, 'star');
+                            let randomAngle = Phaser.Math.Angle.Random();
 
-                    // Calculate velocity components using trigonometry
-                    let velocityX = Math.cos(randomAngle) * gameOptions.bulletSpeed*0.5;
-                    let velocityY = Math.sin(randomAngle) * gameOptions.bulletSpeed*0.5;
+                            // Calculate velocity components using trigonometry
+                            let velocityX = Math.cos(randomAngle) * gameOptions.bulletSpeed*0.5;
+                            let velocityY = Math.sin(randomAngle) * gameOptions.bulletSpeed*0.5;
 
-                    // Apply the velocity to the star
-                    star.body.velocity.x = velocityX;
-                    star.body.velocity.y = velocityY;
+                            // Apply the velocity to the star
+                            star.body.velocity.x = velocityX;
+                            star.body.velocity.y = velocityY;
+                        }
    
-                }, [], this);
-            }
-        }, [], this);
+                    }, [], this);
+                }
+            }, [], this);
+        }
     }
 
     getStarred(dude, star) {
@@ -500,10 +531,12 @@ class PlayGame extends Phaser.Scene {
         this.bulletsOnScreen -= 1;
         this.bossHealth -= 1;
 
-        this.bossHealthBar.setScale((20/100)*this.bossHealth,2);
+        this.bossHealthBar.setScale((20/this.bossMaxHealth)*this.bossHealth,2);
         this.bossHealthText.setText("BOSS HP: " + this.bossHealth)
 
         if (this.bossHealth <= 0) {
+            this.hurt_star = this.add.image(star_boss.x, star_boss.y, "hurt_star")
+            this.hurt_star.setScale(7);
 
             this.tweens.killTweensOf(star_boss);
             star_boss.body.setEnable(false);
@@ -513,6 +546,7 @@ class PlayGame extends Phaser.Scene {
     
             // Prevent any future interaction with grey_star after destruction
             star_boss.destroy();
+
 
         } else {
             this.time.delayedCall(5, () => {
@@ -661,7 +695,9 @@ class PlayGame extends Phaser.Scene {
                 loop: false,
                 volume: 1
             });
-            this.scene.start("EndGame")
+            this.scene.start("EndGame", {
+                bossHealth: this.bossHealth
+            })
         }
         if (this.playerhealth <= 0) {
             this.backgroundMusic.stop();
@@ -669,19 +705,26 @@ class PlayGame extends Phaser.Scene {
                 loop: false,
                 volume: 1
             });
-            this.scene.start("EndGame")
+            this.scene.start("EndGame", {
+                bossHealth: this.bossHealth
+            })
         }
         if (this.bossHealth <= 0) {
 
-            /*this.scene.start('NextStage', { 
-                    playerHealth: this.playerhealth,
-                    playerPosX: this.dude.x, 
-                    playerPosY: this.dude.y,
-                    playerVelocityX: this.dude.body.velocity.x,
-                    playerVelocityY: this.dude.body.velocity.y
-                });*/
-
             this.backgroundMusic.stop();
+            this.can_attack = false;
+
+            /*for(let i = 0; i < 5; i++) {
+                this.time.delayedCall(i*1000, () => {
+                    console.log("Switching...")
+                    if (i >= 4) {
+                        this.scene.start('NextStage', { 
+                            playerHealth: this.playerhealth
+                        })
+                    }
+                }, [], this);
+                
+            }*/
             this.crush.play({
                 loop: false,
                 volume: 2
@@ -698,6 +741,9 @@ class EndGame extends Phaser.Scene {
     preload() {
         this.load.audio('death_music', 'assets/sound/Death_music.mp3');
     }
+    init(data) {
+        this.bossHealth = data.bossHealth;
+    }
     create() {
 
         this.death_music = this.sound.add('death_music');
@@ -707,15 +753,17 @@ class EndGame extends Phaser.Scene {
             volume: 10
         });
 
-        this.failtext = this.add.text(game.config.width*0.25, game.config.height*0.20, "You died. It happens. And will happen again.", {fontSize: "30px", fill: "#ffffff"})
-        this.instructiontext = this.add.text(game.config.width*0.32, game.config.height*0.30, "Refresh page (R) to try again.", {fontSize: "30px", fill: "#808080"})
-        this.instructiontext2 = this.add.text(game.config.width*0.3, game.config.height*0.40, "Oh, right. The controls are:", {fontSize: "30px", fill: "#808080"})
-        this.instructiontext3 = this.add.text(game.config.width*0.3, game.config.height*0.45, "'Left' and 'right' for movement", {fontSize: "30px", fill: "#808080"})
-        this.instructiontext4 = this.add.text(game.config.width*0.3, game.config.height*0.50, "'Z' or 'UP' for jump", {fontSize: "30px", fill: "#808080"})
-        this.instructiontext5 = this.add.text(game.config.width*0.3, game.config.height*0.55, "'X' or 'SPACE' for shoot", {fontSize: "30px", fill: "#808080"})
-        this.instructiontext5 = this.add.text(game.config.width*0.3, game.config.height*0.60, "'R' to reset screen", {fontSize: "30px", fill: "#808080"})
-        this.instructiontext5 = this.add.text(game.config.width*0.3, game.config.height*0.70, "You can double jump and you can", {fontSize: "30px", fill: "#808080"})
-        this.instructiontext5 = this.add.text(game.config.width*0.3, game.config.height*0.75, "shoot max 5 bullets at a time.", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.25, game.config.height*0.20, "You died. It happens. And will happen again.", {fontSize: "30px", fill: "#ffffff"})
+        this.add.text(game.config.width*0.40, game.config.height*0.25, "(Boss HP remaining: " + this.bossHealth + ")", {fontSize: "20px", fill: "#909090"})
+
+        this.add.text(game.config.width*0.32, game.config.height*0.30, "Refresh page (R) to try again.", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.3, game.config.height*0.40, "Oh, right. The controls are:", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.3, game.config.height*0.45, "'Left' and 'right' for movement", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.3, game.config.height*0.50, "'Z' or 'UP' for jump", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.3, game.config.height*0.55, "'X' or 'SPACE' for shoot", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.3, game.config.height*0.60, "'R' to reset screen", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.3, game.config.height*0.70, "You can double jump and you can", {fontSize: "30px", fill: "#808080"})
+        this.add.text(game.config.width*0.3, game.config.height*0.75, "shoot max 5 bullets at a time.", {fontSize: "30px", fill: "#808080"})
         
         this.resetKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
     }
@@ -767,15 +815,12 @@ class NextStage extends Phaser.Scene {
     constructor() {
         super("NextStage")
         this.bulletCap = 5;
-        this.facingRight = false;
+        this.facingRight = true;
         this.bulletsOnScreen = 0;
+        this.boss_timer = 10;
     }
     init(data) {
         this.playerHealth = data.playerHealth;
-        this.playerPosX = data.playerPosX;
-        this.playerPosY = data.playerPosY;
-        this.initialVelocityX = data.playerVelocityX;
-        this.initialVelocityY = data.playerVelocityY;
     }
     preload() {
         this.load.image("ground", "assets/platform.png")
@@ -787,6 +832,7 @@ class NextStage extends Phaser.Scene {
         this.load.image("damaged_grey_star", "assets/star_enemy_damaged.png")
         this.load.image("spike_down", "assets/spike_down.png")
         this.load.image("boss_hp", "assets/boss_hp.png")
+        this.load.image("boss_time", "assets/boss_time.png")
 
         this.load.audio('music', 'assets/sound/Background_music.mp3');
         this.load.audio('gun', 'assets/sound/gun.mp3');
@@ -817,13 +863,9 @@ class NextStage extends Phaser.Scene {
             immovable: true,
             allowGravity: false
         })
-        this.groundGroup.create(game.config.width*0.25, game.config.height*0.2, "ground")
-        this.groundGroup.create(game.config.width*0.1, game.config.height*0.3, "ground")
-        this.groundGroup.create(game.config.width*0.25, game.config.height*0.4, "ground")
-        this.groundGroup.create(game.config.width*0.1, game.config.height*0.5, "ground")
-        this.groundGroup.create(game.config.width*0.25, game.config.height*0.6, "ground")
-        this.groundGroup.create(game.config.width*0.1, game.config.height*0.7, "ground")
-        this.groundGroup.create(game.config.width*0.25, game.config.height*0.8, "ground")
+        this.middle_platform = this.groundGroup.create(game.config.width*0.5, game.config.height*0.9, "ground")
+        this.middle_platform.setScale(4,5.5);
+        
         
         // Spikes 76 for the top of the screen
         this.spikeGroup = this.physics.add.group({
@@ -835,9 +877,8 @@ class NextStage extends Phaser.Scene {
         }
         
         // Re-create player
-        this.dude = this.physics.add.sprite(this.playerPosX, this.playerPosY, "dude")
+        this.dude = this.physics.add.sprite(game.config.width*0.5, game.config.height*0.75, "dude")
         this.dude.body.gravity.y = gameOptions.dudeGravity;
-        this.dude.setVelocity(this.initialVelocityX, this.initialVelocityY);
         this.physics.add.collider(this.dude, this.groundGroup)
 
         // Re-create bullets group
@@ -846,6 +887,9 @@ class NextStage extends Phaser.Scene {
         })
         this.physics.add.overlap(this.bulletGroup, this.groundGroup, this.bulletHitGround, null, this)
 
+        // Add health display
+        this.add.image(16, 43, "star")
+        this.healthText = this.add.text(32, 30, this.playerHealth, {fontSize: "30px", fill: "#ffffff"})
 
         // MOVEMENT
         // Cursor keys
@@ -858,6 +902,10 @@ class NextStage extends Phaser.Scene {
         this.jumpKey_2 = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
         
         this.resetKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
+
+        // Boss time bar
+        this.bossHealthBar = this.add.image(0, 10, "boss_time")
+        this.bossHealthBar.setScale(20,2);
 
         // Turning to left and left movement
         this.anims.create({
@@ -901,6 +949,13 @@ class NextStage extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         })
+
+        this.triggerTimer = this.time.addEvent({
+            callback: this.timerTickDown,
+            callbackScope: this,
+            delay: 2000, // Updates every second
+            loop: false
+        })
     }
 
     // Function to handle shooting
@@ -937,6 +992,21 @@ class NextStage extends Phaser.Scene {
         bullet.disableBody(true, true)
         bullet.destroy();
         this.bulletsOnScreen -= 1;
+    }
+
+    // Tick down for 120 seconds
+    timerTickDown() {
+        const boss_max_timer = this.boss_timer;
+        for(let i = 0; i < boss_max_timer; i++) {
+            this.time.delayedCall(i*1000, () => {
+                this.boss_timer -= 1;
+                this.bossHealthBar.setScale((20/boss_max_timer)*this.boss_timer,2);
+            }, [], this);
+        }
+    }
+
+    finalBattle() {
+        console.log("Start final struggle")
     }
 
     update() {
