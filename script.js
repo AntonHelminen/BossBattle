@@ -29,7 +29,9 @@ window.onload = function() {
                 }
             }
         },
+
         scene: [PlayGame, NextStage, EndGame, WinGame]
+        //scene: [NextStage, EndGame, WinGame]
     }
     game = new Phaser.Game(gameConfig)
     window.focus();
@@ -40,11 +42,11 @@ class PlayGame extends Phaser.Scene {
     constructor() {
         super("PlayGame")
         this.facingRight = true; // Track the direction the dude is facing
-        this.playerhealth = 5; // How many hits the player can take
+        this.playerhealth = 10; // How many hits the player can take
         this.doubleJump = false; // Track if the player can double jump
         this.bulletCap = 5; // Max bullets on screen
         this.bulletsOnScreen = 0; // Bullet tracker
-        this.bossHealth = 100; // Boss health
+        this.bossHealth = 80; // Boss health
         this.greyStarHealth = 20; // Miniboss health
         this.timer = 0; // Seconds passed
         this.can_attack = true; // Whether boss can attack
@@ -864,22 +866,23 @@ class NextStage extends Phaser.Scene {
         this.playerHealth = data.playerHealth;
     }
     preload() {
-        this.load.image("ground", "assets/platform.png")
-        this.load.image("star", "assets/star.png")
-        this.load.spritesheet("dude", "assets/dude.png", {frameWidth: 32, frameHeight: 48})
-        this.load.spritesheet("bullet", "assets/bullet.png", {frameWidth: 1080, frameHeight: 1080, scale: 0.01})
-        this.load.image("damaged_star", "assets/damaged_star.png")
-        this.load.image("hurt_star", "assets/hurt_star.png")
-        this.load.image("grey_star", "assets/star_enemy.png")
-        this.load.image("damaged_grey_star", "assets/star_enemy_damaged.png")
-        this.load.image("spike_down", "assets/spike_down.png")
-        this.load.image("boss_hp", "assets/boss_hp.png")
-        this.load.image("boss_time", "assets/boss_time.png")
-        this.load.image("norppa", "assets/norppa.png")
-        this.load.image("sponge", "assets/sponge.png")
-        this.load.image("enemy_dude", "assets/enemy_dude.png")
-        this.load.image("shot_glass", "assets/shot_glass.png")
-        this.load.image("light_beam", "assets/beam.png")
+        this.load.image("ground", "assets/platform.png");
+        this.load.image("star", "assets/star.png");
+        this.load.spritesheet("dude", "assets/dude.png", {frameWidth: 32, frameHeight: 48});
+        this.load.spritesheet("bullet", "assets/bullet.png", {frameWidth: 1080, frameHeight: 1080, scale: 0.01});
+        this.load.image("damaged_star", "assets/damaged_star.png");
+        this.load.image("hurt_star", "assets/hurt_star.png");
+        this.load.image("grey_star", "assets/star_enemy.png");
+        this.load.image("damaged_grey_star", "assets/star_enemy_damaged.png");
+        this.load.image("spike_down", "assets/spike_down.png");
+        this.load.image("boss_hp", "assets/boss_hp.png");
+        this.load.image("boss_time", "assets/boss_time.png");
+        this.load.image("norppa", "assets/norppa.png");
+        this.load.image("sponge", "assets/sponge.png");
+        this.load.image("enemy_dude", "assets/enemy_dude.png");
+        this.load.image("shot_glass", "assets/shot_glass.png");
+        this.load.image("light_beam", "assets/beam.png");
+        this.load.image("targetted", "assets/targetted.png");
 
         this.load.audio('music', 'assets/sound/Background_music.mp3');
         this.load.audio('viiksekkaita', 'assets/sound/viiksekaitaSong.mp3');
@@ -894,6 +897,7 @@ class NextStage extends Phaser.Scene {
         this.load.audio('crack', 'assets/sound/norppaEats.mp3');
         this.load.audio('hawk', 'assets/sound/hawk.mp3');
         this.load.audio('failoof', 'assets/sound/failoof.mp3');
+        this.load.audio('Epic_finale_theme', 'assets/sound/Epic_finale_theme.mp3');
     }
     
     create() {
@@ -913,6 +917,7 @@ class NextStage extends Phaser.Scene {
         this.crack = this.sound.add('crack');
         this.hawk = this.sound.add('hawk');
         this.failoof = this.sound.add('failoof');
+        this.Epic_finale_theme = this.sound.add('Epic_finale_theme');
 
         // Re-create platforms (Some initially inactive and invisible)
         this.groundGroup = this.physics.add.group({
@@ -923,20 +928,16 @@ class NextStage extends Phaser.Scene {
         this.middle_platform.setScale(4,7);
 
         this.left_platform = this.groundGroup.create(game.config.width*0.25, game.config.height*0.62, "ground")
-        this.left_platform.setScale(1,1);
-        this.left_platform.setActive(0).setVisible(0);
+        this.left_platform.setActive(0).disableBody(0).setVisible(0);
 
         this.left_platform_2 = this.groundGroup.create(game.config.width*0.1, game.config.height*0.45, "ground")
-        this.left_platform_2.setScale(1,1);
-        this.left_platform_2.setActive(0).setVisible(0);
+        this.left_platform_2.setActive(0).disableBody(0).setVisible(0);
 
         this.right_platform = this.groundGroup.create(game.config.width*0.75, game.config.height*0.62, "ground")
-        this.right_platform.setScale(1,1);
-        this.right_platform.setActive(0).setVisible(0);
+        this.right_platform.setActive(0).disableBody(0).setVisible(0);
         
         this.right_platform_2 = this.groundGroup.create(game.config.width*0.9, game.config.height*0.45, "ground")
-        this.right_platform_2.setScale(1,1);
-        this.right_platform_2.setActive(0).setVisible(0);
+        this.right_platform_2.setActive(0).disableBody(0).setVisible(0);
         
         // Spikes (76 for the top of the screen)
         this.spikeGroup = this.physics.add.group({
@@ -951,6 +952,10 @@ class NextStage extends Phaser.Scene {
         this.dude = this.physics.add.sprite(game.config.width*0.5, game.config.height*0.75, "dude")
         this.dude.body.gravity.y = gameOptions.dudeGravity;
         this.physics.add.collider(this.dude, this.groundGroup)
+
+        // Target follow
+        this.target = this.physics.add.sprite(game.config.width*0.5, game.config.height*0.75, "targetted")
+        this.target.setScale(0.15).setVisible(0)
 
         // Re-create bullets group
         this.bulletGroup = this.physics.add.group({
@@ -1215,8 +1220,8 @@ class NextStage extends Phaser.Scene {
     
     
         } else {
-            this.time.delayedCall(5, () => {
-                this.metal_hit.play({
+            this.time.delayedCall(1, () => {
+                this.boss_hit.play({
                     loop: false,
                     volume: 2
                 });
@@ -1434,7 +1439,7 @@ class NextStage extends Phaser.Scene {
                                     star = this.starsGroup.create(0, Phaser.Math.Between(game.config.height*0.2, game.config.height*0.8), 'star');
                                 }
 
-                                star.body.velocity.x = gameOptions.bulletSpeed*0.5*x_vel;
+                                star.body.velocity.x = gameOptions.bulletSpeed*0.3*x_vel;
                                 star.body.velocity.y = Phaser.Math.Between(-100,100);
 
                             } else {
@@ -1446,13 +1451,218 @@ class NextStage extends Phaser.Scene {
                                     star = this.starsGroup.create(Phaser.Math.Between(0, game.config.width), 0, 'star');
                                 }
                                 star.body.velocity.x = Phaser.Math.Between(-100,100);
-                                star.body.velocity.y = gameOptions.bulletSpeed*0.5*y_vel;
+                                star.body.velocity.y = gameOptions.bulletSpeed*0.3*y_vel;
                             }
                             
                             star.setScale(1)
                             star.body.allowGravity = false;
                         }
                         }, [], this); 
+                }
+            }, [], this);
+        }
+    }
+
+    // Forever loop 360 attack
+    spawn_random360() {
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+
+                for(let i = 0; i < 100; i++) {
+                    this.time.delayedCall(i*500, () => {
+                        if(this.can_attack) {
+
+                            let star;
+                            star = this.starsGroup.create(this.starBoss.x, this.starBoss.y, 'star');
+                            let randomAngle = Phaser.Math.Angle.Random();
+
+                            // Calculate velocity components using trigonometry
+                            let velocityX = Math.cos(randomAngle) * gameOptions.bulletSpeed*0.3;
+                            let velocityY = Math.sin(randomAngle) * gameOptions.bulletSpeed*0.3;
+
+                            // Apply the velocity to the star
+                            star.body.velocity.x = velocityX;
+                            star.body.velocity.y = velocityY;
+
+                            star.setScale(0.5);
+                            if (i >= 99) {
+                                this.spawn_random360();
+                            }
+                        }
+                        
+                    }, [], this);
+                }
+            }, [], this);
+        }
+    }
+    
+    spawn_fixed_360(x,y,count) {
+        if(this.can_attack) {
+            this.time.delayedCall(2000, () => {
+                for(let k = 0; k < count; k++) {
+
+                    this.time.delayedCall(2000*k, () => {
+                        for(let i = 0; i < 15; i++) {
+                            this.time.delayedCall(i, () => {
+                                if(this.can_attack) {
+
+                                    let star;
+                                    star = this.starsGroup.create(x, y, 'star');
+
+                                    star.body.velocity.x = Math.cos(i*18+k*7) * gameOptions.bulletSpeed*0.2;
+                                    star.body.velocity.y = Math.sin(i*18+k*7) * gameOptions.bulletSpeed*0.2;
+                                    star.body.allowGravity = false;
+                                    star.body.setImmovable(true);
+
+                                    star.setScale(0.5);
+                            
+                                }
+                                }, [], this); 
+                        }
+                    }, [], this);
+                }
+
+                this.time.delayedCall(2000*count, () => {
+                    this.star_spray();
+                }, [], this);
+            }, [], this);
+        }
+    }
+
+    spawn_360_intro() {
+        if(this.can_attack) {
+            for(let k = 0; k < 3; k++) {
+
+                this.time.delayedCall(200*k, () => {
+                    for(let i = 0; i < 20; i++) {
+                        this.time.delayedCall(i, () => {
+                            if(this.can_attack) {
+
+                                let star;
+                                star = this.starsGroup.create(this.starBoss.x, this.starBoss.y, 'star');
+
+                                star.body.velocity.x = Math.cos(i*18+k*7) * gameOptions.bulletSpeed*0.2;
+                                star.body.velocity.y = Math.sin(i*18+k*7) * gameOptions.bulletSpeed*0.2;
+                                star.body.allowGravity = false;
+                                star.body.setImmovable(true);
+                            
+                            }
+                            }, [], this); 
+                    }
+                }, [], this);
+            }
+        }
+    }
+
+    stars_float_too() {
+
+        console.log("Stars are floating");
+        const max = 100;
+
+        if(this.can_attack) {
+            this.time.delayedCall(2000, () => {
+                for(let i = 0; i < max; i++) {
+                    this.time.delayedCall(i*300, () => {
+                        if(this.can_attack) {
+
+                            let star;
+                            const ver_hor = Phaser.Math.Between(0,1);
+                            const dir_val = Phaser.Math.Between(0,1);
+
+                            if (ver_hor == 1) {
+                                let x_vel = 1;
+                                if (dir_val == 1) {
+                                    x_vel = -1;
+                                    star = this.starsGroup.create(game.config.width, Phaser.Math.Between(game.config.height*0.2, game.config.height*0.8), 'star');
+                                } else {
+                                    star = this.starsGroup.create(0, Phaser.Math.Between(game.config.height*0.2, game.config.height*0.8), 'star');
+                                }
+
+                                star.body.velocity.x = gameOptions.bulletSpeed*0.1*x_vel;
+                                star.body.velocity.y = Phaser.Math.Between(-100,100);
+
+                            } else {
+                                let y_vel = 1;
+                                if (dir_val == 1) {
+                                    y_vel = -1;
+                                    star = this.starsGroup.create(Phaser.Math.Between(0, game.config.width), game.config.height, 'star');
+                                } else {
+                                    star = this.starsGroup.create(Phaser.Math.Between(0, game.config.width), 0, 'star');
+                                }
+                                star.body.velocity.x = Phaser.Math.Between(-100,100);
+                                star.body.velocity.y = gameOptions.bulletSpeed*0.1*y_vel;
+                            }
+                            
+                            star.setScale(0.5)
+                            star.body.allowGravity = false;
+
+                            if (i >= max-1) {
+                                this.spawn_fixed_360(this.starBoss.x, this.starBoss.y, 20);
+                            }
+                        }
+                        }, [], this); 
+                }
+            }, [], this);
+        }
+    }
+
+    // The boss Shoots ten stars at the players current position
+    star_spray() {
+        if(this.can_attack) {
+            this.target.setVisible(1)
+            this.time.delayedCall(2000, () => {
+                for(let i = 0; i < 100; i++) {
+                    this.time.delayedCall(i*50, () => {
+                        if(this.can_attack) {
+
+                            this.shot.play({
+                                loop: false,
+                                volume: 2
+                            });
+
+                            let star;
+                            star = this.starsGroup.create(this.starBoss.x, this.starBoss.y, 'star');
+                            star.setScale(2)
+                            const dx = this.dude.x - star.x;
+                            const dy = this.dude.y - star.y;
+
+                            const angle = Math.atan2(dy, dx);
+
+                            star.body.velocity.x = Math.cos(angle) * gameOptions.bulletSpeed*0.7;
+                            star.body.velocity.y = Math.sin(angle) * gameOptions.bulletSpeed*0.7;
+
+                            star.body.allowGravity = false;
+                            if (i >= 99) {
+                                this.target.setVisible(0)
+                                this.stars_float_too();
+                            }
+                        }
+                        }, [], this); 
+                }
+            }, [], this);
+        }
+    }
+
+    // The boss rains down spikes
+    spike_rain(mod) {
+        if(this.can_attack) {
+            this.time.delayedCall(1000, () => {
+                for(let i = 0; i < 100; i++) {
+                    this.time.delayedCall(i*1000/mod, () => {
+                        if(this.can_attack) {
+
+                            let star;
+                            star = this.starsGroup.create(Phaser.Math.Between(this.dude.x-500, this.dude.x+500), 0, 'spike_down');
+                            star.body.velocity.y = gameOptions.bulletSpeed*0.8;
+
+                            star.body.allowGravity = false;
+
+                
+                            if (i >= 99) {
+                                this.spike_rain(mod+1);
+                            }
+                        }
+                    }, [], this);
                 }
             }, [], this);
         }
@@ -1464,6 +1674,7 @@ class NextStage extends Phaser.Scene {
             volume: 0.5
         });
 
+        
         this.time.delayedCall(1000, () => {
             this.lightBeam1.setVisible(1);
             this.lightBeam2.setVisible(1);
@@ -1480,6 +1691,7 @@ class NextStage extends Phaser.Scene {
 
         this.time.delayedCall(11000, () => {
             this.norppa_attack_2();
+            
         }, [], this);
 
         // Three norppa shots
@@ -1535,23 +1747,76 @@ class NextStage extends Phaser.Scene {
         this.time.delayedCall(34000, () => {
             this.lightBeam1.setVisible(0);
             this.lightBeam2.setVisible(0);
+            this.Epic_finale_theme.play({
+                loop: false,
+                volume: 2
+            });
         }, [], this);
 
+        this.time.delayedCall(35000, () => {
+            this.left_platform.setActive(1).enableBody(true, this.left_platform.x, this.left_platform.y, true, true).setVisible(1);
+        }, [], this);
+
+        this.time.delayedCall(36500, () => {
+            this.right_platform.setActive(1).enableBody(true, this.right_platform.x, this.right_platform.y, true, true).setVisible(1);
+        }, [], this);
+
+        this.time.delayedCall(38000, () => {
+            this.left_platform_2.setActive(1).enableBody(true, this.left_platform_2.x, this.left_platform_2.y, true, true).setVisible(1);
+        }, [], this);
+
+        this.time.delayedCall(39500, () => {
+            this.right_platform_2.setActive(1).enableBody(true, this.right_platform_2.x, this.right_platform_2.y, true, true).setVisible(1);
+        }, [], this);
 
         // The final battle starts. Just one infinite attack for now with the boss staying still
-        this.time.delayedCall(35000, () => {
+        this.time.delayedCall(42000, () => {
+
             this.bossHealthBar.setVisible(1);
             this.bossHealthText.setVisible(1);
 
             this.starBoss.setVisible(1);
             this.starBoss.setActive(1);
 
-            this.left_platform.setActive(1).setVisible(1);
-            this.left_platform_2.setActive(1).setVisible(1);
-            this.right_platform.setActive(1).setVisible(1);
-            this.right_platform_2.setActive(1).setVisible(1);
-
+            this.spawn_360_intro();
+        
         }, [], this);
+
+        this.time.delayedCall(46000, () => {
+            this.spawn_random360();
+        }, [], this);
+
+
+        this.time.delayedCall(55000, () => {
+            this.spawn_fixed_360(this.starBoss.x, this.starBoss.y, 20);
+        }, [], this);
+
+        this.time.delayedCall(140000, () => {
+            this.spike_rain(1);
+        }, [], this);
+
+        
+        this.time.delayedCall(240000, () => {
+            this.starBoss.setScale(20);
+        }, [], this);
+
+        this.time.delayedCall(241000, () => {
+            this.starBoss.setScale(30);
+        }, [], this);
+
+        this.time.delayedCall(242000, () => {
+            this.starBoss.setScale(40);
+        }, [], this);
+
+        this.time.delayedCall(243000, () => {
+            this.starBoss.setScale(50);
+        }, [], this);
+
+        this.time.delayedCall(245000, () => {
+            this.starBoss.setScale(70);
+        }, [], this);
+        
+
     }
 
     update() {
@@ -1574,6 +1839,9 @@ class NextStage extends Phaser.Scene {
                 this.dude.anims.play("halt_left", true)
             }
         }
+        // Target follows player. (Most of the time this is invisible)
+        this.target.x = this.dude.x;
+        this.target.y = this.dude.y;
 
         // Jump and double jump logic
         if (Phaser.Input.Keyboard.JustDown(this.jumpKey) || Phaser.Input.Keyboard.JustDown(this.jumpKey_2)) {
@@ -1645,6 +1913,7 @@ class NextStage extends Phaser.Scene {
         // Game end conditions
         if (this.dude.y > game.config.height || this.dude.y < 0) {
             this.viiksekaita.stop();
+            this.Epic_finale_theme.stop();
             this.death_sound.play({
                 loop: false,
                 volume: 1
@@ -1653,6 +1922,7 @@ class NextStage extends Phaser.Scene {
         }
         if (this.playerHealth <= 0) {
             this.viiksekaita.stop();
+            this.Epic_finale_theme.stop();
             this.death_sound.play({
                 loop: false,
                 volume: 1
@@ -1660,7 +1930,8 @@ class NextStage extends Phaser.Scene {
             this.scene.start("EndGame")
         }
         if (this.bossHealth <= 0) {
-
+            this.viiksekaita.stop();
+            this.Epic_finale_theme.stop();
             this.can_attack = false;
             this.scene.start("WinGame")
         }
