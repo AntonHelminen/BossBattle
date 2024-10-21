@@ -1250,8 +1250,8 @@ class NextStage extends Phaser.Scene {
             volume: 2
         });
         star.disableBody(true, true)
-        this.playerhealth -= 1
-        this.healthText.setText(this.playerhealth)
+        this.playerHealth -= 1
+        this.healthText.setText(this.playerHealth)
     }
 
     // Tick down for 120 seconds
