@@ -29,7 +29,7 @@ window.onload = function() {
                 }
             }
         },
-        scene: [PlayGame, EndGame, WinGame]
+        scene: [PlayGame, NextStage, EndGame, WinGame]
     }
     game = new Phaser.Game(gameConfig)
     window.focus();
